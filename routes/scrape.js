@@ -1,6 +1,7 @@
 //dependencies
 const cheerio = require("cheerio");
-const request = require("request");
+// const request = require("request");
+const axios = require('axios')
 
 //models
 const Note = require("../models/Note.js");
@@ -9,11 +10,12 @@ const Save = require("../models/Save");
 
 module.exports = function (app) {
     app.get("/scrape", function (req, res) {
-        request("https://www.nytimes.com/", function (error, response, html) {
+        axios.get("https://www.nytimes.com/").then( function (response) {
+
 
             // Load the HTML into cheerio and save it to a variable
             // '$' becomes a shorthand for cheerio's selector commands, much like jQuery's '$'
-            let $ = cheerio.load(html);
+            let $ = cheerio.load(response.data);
 
             // An empty array to save the data that we'll scrape
 
@@ -21,31 +23,36 @@ module.exports = function (app) {
             // NOTE: Cheerio selectors function similarly to jQuery's selectors,
             // but be sure to visit the package's npm page to see how it works
 
-            $("article.story").each(function (i, element) {
+
+
+            $("article").each(function (i, element) {
                 let result = {};
                 // let link = $(element).children().attr("href");
                 // let title = $(element).children().text();
-                result.summary = $(element).children("p.summary").text();
-                result.byline = $(element).children("p.byline").text();
-                result.title = $(element).children("h2").text();
-                result.link = $(element).children("h2").children("a").attr("href");
+                result.summary = $(element).find("li").text();
+                result.title = $(element).find("span.balancedHeadline").text();
+                result.link = $(element).find("a").attr("href");
+
+
+
+                console.log(result);
                 // Save these results in an object that we'll push into the results array we defined earlier
-                if (result.title && result.link) {
-                    let entry = new Article(result);
-                    // Now, save that entry to the db
-                    Article.update(
-                        {link: result.link},
-                        result,
-                        { upsert: true },
-                        function (error, doc){
-                            if (error) {
-                                console.log(error);
-                            }
-                        }
-                    );
-                }
+                // if (result.title && result.link) {
+                //     let entry = new Article(result);
+                //     // Now, save that entry to the db
+                //     Article.update(
+                //         {link: result.link},
+                //         result,
+                //         { upsert: true },
+                //         function (error, doc){
+                //             if (error) {
+                //                 console.log(error);
+                //             }
+                //         }
+                //     );
+                // }
             });
-            res.json({"code" : "success"});
+            res.send("Completed")
             // res.json(true);
         });
     });
